@@ -73,21 +73,14 @@ function injectSpecrules() {
     if (href.origin != document.location.origin)
       continue;
     url = href.href;
+    break;
   }
-  console.log('injectSpecrules url', url);
   if (!url)
     return;
-  const rule = document.createElement('script');
-  rule.type = 'speculationrules';
-  rule.textContent = `{
-  "prerender": [
-    {
-     "source": "list",
-     "urls": ["${url}"]
-    }
-  ]
-}`;
-  document.head.appendChild(rule);
+  const meta = document.createElement('meta');
+  meta.name = "PrerenderTweaks";
+  meta.content = url;
+  document.head.appendChild(meta);
   prerenderStatus.hasInjectedSpecrules = true;
 }
 if (document.readyState === 'complete') {

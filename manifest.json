@@ -2,15 +2,12 @@
   "name": "Prerender Tweaks",
   "manifest_version": 3,
   "version": "1.0",
-  "permissions": [
-    "tabs"
-  ],
+  "action": {
+    "default_title": "PrerenderTweeks"
+  },
   "background": {
     "service_worker": "main.js"
   },
-  "host_permissions": [
-    "<all_urls>"
-  ],
   "content_scripts": [
     {
       "matches": [
@@ -23,7 +20,10 @@
       "all_frames": false
     }
   ],
-  "action": {
-    "default_title": "PrerenderTweeks"
-  }
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "permissions": [
+    "tabs"
+  ]
 }
