@@ -6,27 +6,34 @@ function updateStatus(tabId, status) {
     return;
   console.log(status);
   let text = '|';
-  let color = '#000';
+  let color = undefined;
+  let title = 'Prerender Tweaks';
   if (status.restoredFromBFCache) {
     text += '$|';
     color = '#f0f';
+    title += '\nRestored from BFCache';
   } else {
     if (status.prerendered) {
       text += 'P|';
       color = '#00f';
+      title += '\nPrerendered';
     }
     if (status.hasInjectedSpecrules) {
       text += 'I|';
-      color = '#ff0';
+      if (!color)
+        color = '#ff0';
+      title += '\nPage contains tweaked speculationrules';
     } else if (status.hasSpecrules) {
       text += 'S|';
       color = '#0f0';
+      title += '\nPage contains speculationrules';
     }
   }
   if (text === '|')
     text = '';
   chrome.action.setBadgeText({ tabId: tabId, text: text });
   chrome.action.setBadgeBackgroundColor({ tabId: tabId, color: color });
+  chrome.action.setTitle({ tabId: tabId, title: title });
 }
 
 function checkPrerenderStatus(options) {

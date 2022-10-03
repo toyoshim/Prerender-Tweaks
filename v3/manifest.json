@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "version": "1.0",
   "action": {
-    "default_title": "PrerenderTweeks"
+    "default_title": "Prerender Tweeks"
   },
   "background": {
     "service_worker": "main.js"

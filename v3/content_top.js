@@ -70,15 +70,22 @@ function injectSpecrules() {
   let url = undefined;
   for (let a of document.getElementsByTagName('a')) {
     const href = new URL(a.href, document.baseURI);
-    if (href.origin != document.location.origin)
+    if (href.origin !== document.location.origin)
       continue;
+    if (href.href.startsWith(document.location.href)) {
+      const urlLen = document.location.href.length;
+      if (href.href.length == urlLen)
+        continue;
+      if (href.href[urlLen] == '#' || href.href[urlLen] == '?')
+        continue;
+    }
     url = href.href;
     break;
   }
   if (!url)
     return;
   const meta = document.createElement('meta');
-  meta.name = "PrerenderTweaks";
+  meta.name = 'PrerenderTweaks';
   meta.content = url;
   document.head.appendChild(meta);
   prerenderStatus.hasInjectedSpecrules = true;
