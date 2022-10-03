@@ -99,7 +99,7 @@ window.addEventListener('load', e => {
 });
 
 // Communication with the main.js running in the background service worker.
-chrome.runtime.onMessage.addListener((message, snder, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message === 'queryStatus') {
     queried = true;
     sendResponse(prerenderStatus);

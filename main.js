@@ -46,6 +46,6 @@ chrome.tabs.onUpdated.addListener((id, obj, tab) => {
   }
 });
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.message == 'update')
+  if (message.message === 'update')
     updateStatus(sender.tab.id, message.status);
 });
