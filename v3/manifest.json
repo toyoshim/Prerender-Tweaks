@@ -24,6 +24,7 @@
     "<all_urls>"
   ],
   "permissions": [
-    "tabs"
+    "tabs",
+    "contextMenus"
   ]
 }

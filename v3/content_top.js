@@ -62,8 +62,16 @@ window.addEventListener('pageshow', e => {
   chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
 });
 
+function injectSpecrules(url) {
+  const meta = document.createElement('meta');
+  meta.name = 'PrerenderTweaks';
+  meta.content = url;
+  document.head.appendChild(meta);
+  prerenderStatus.hasInjectedSpecrules = true;
+}
+
 // Inject a speculationrules for the first anchor tag on the load completion.
-function injectSpecrules() {
+function tryInjectingSpecrules() {
   if (prerenderStatus.hasSpecrules || prerenderStatus.hasInjectedSpecrules)
     return;
 
@@ -84,24 +92,22 @@ function injectSpecrules() {
   }
   if (!url)
     return;
-  const meta = document.createElement('meta');
-  meta.name = 'PrerenderTweaks';
-  meta.content = url;
-  document.head.appendChild(meta);
-  prerenderStatus.hasInjectedSpecrules = true;
+  injectSpecrules(url);
 }
 if (document.readyState === 'complete') {
-  injectSpecrules();
+  tryInjectingSpecrules();
 }
 window.addEventListener('load', e => {
   checkSpecrules(false);
-  injectSpecrules();
+  tryInjectingSpecrules();
 });
 
 // Communication with the main.js running in the background service worker.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message === 'queryStatus') {
+  if (message.command === 'queryStatus') {
     queried = true;
     sendResponse(prerenderStatus);
+  } else if (message.command === 'insertRule') {
+    injectSpecrules(message.url);
   }
 });
