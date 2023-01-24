@@ -2,7 +2,7 @@
 
 ## Install
 1. Open chrome://extensions/, and enable the developer mode.
-2. Install both v2 and v3 directories from the "Load unpacked" button.
+2. Install v3 directories from the "Load unpacked" button.
 3. Pin the `Prerender Tweaks` from the Extensions menu.
 
 ![Pin](img/pin.png)

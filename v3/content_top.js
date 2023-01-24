@@ -63,10 +63,12 @@ window.addEventListener('pageshow', e => {
 });
 
 function injectSpecrules(url) {
-  const meta = document.createElement('meta');
-  meta.name = 'PrerenderTweaks';
-  meta.content = url;
-  document.head.appendChild(meta);
+  const rule = document.createElement('script');
+  rule.type = 'speculationrules';
+  rule.innerText = `{ "prerender": [ { "source": "list", "urls": [ "${url}" ] } ] }`;
+  document.head.appendChild(rule);
+  console.log('injecting speculationrules for ' + url);
+
   prerenderStatus.hasInjectedSpecrules = true;
 }
 
