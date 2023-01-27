@@ -1,6 +1,6 @@
 # Chrome Extensions: Prerender Tweaks
 
-## Install
+## Install (requires Chrome 110+)
 1. Open chrome://extensions/, and enable the developer mode.
 2. Install v3 directories from the "Load unpacked" button.
 3. Pin the `Prerender Tweaks` from the Extensions menu.
