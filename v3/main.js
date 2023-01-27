@@ -67,8 +67,10 @@ function handleContentSwitch(options) {
 function registerHooks() {
   // Tab switch.
   chrome.tabs.onActivated.addListener(activeInfo => {
-    checkPrerenderStatus({ reason: 'onActivated', tabId: activeInfo.tabId, windowId: activeInfo.windowId });
     chrome.tabs.get(activeInfo.tabId, tab => {
+      if (tab.url.startsWith('http')) {
+        checkPrerenderStatus({ reason: 'onActivated', tabId: activeInfo.tabId, windowId: activeInfo.windowId });
+      }
       handleContentSwitch({ reason: 'onActivated', url: tab.url });
     });
   });
@@ -78,7 +80,11 @@ function registerHooks() {
     if (changeInfo.status === 'loading' && changeInfo.url) {
       handleContentSwitch({ reason: 'onUpdated.loading', url: changeInfo.url });
     } else if (changeInfo.status === 'complete') {
-      checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
+      if (changeInfo.url && changeInfo.url.startsWith('http')) {
+        checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
+      } else {
+        updateIcon(tab.id, 'Unsupported page', 'X', '#f77');
+      }
     }
   });
 
