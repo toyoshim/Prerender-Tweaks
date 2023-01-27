@@ -51,7 +51,10 @@ function checkPrerenderStatus(options) {
 
 function handleContentSwitch(options) {
   // update context menu rule.
-  console.log(options.url);
+  if (options || !options.url || !options.url.startsWith('http')) {
+    chrome.contextMenus.update('link', {});
+    return;
+  }
   const url = new URL(options.url);
   const portString = url.port ? (':' + url.port) : '';
   const sameOriginPattern = url.protocol + '//' + url.host + portString + '/*';

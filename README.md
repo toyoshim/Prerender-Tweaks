@@ -31,5 +31,5 @@ Prerender Tweaks inject a speculationrules if it doesn't exist in the page.
 It will point the first appeared same-origin, different document anchor link.
 
 ### Manual injection from anchor-popup
-Popup menu over an anchor tag will show 'Prerender this link' menu item.
+Popup menu over an anchor tag for a same-origin link will show 'Prerender this link' menu item.
 It will inject a speculationrules for the link so that you can try activating the prerendered link manually.
