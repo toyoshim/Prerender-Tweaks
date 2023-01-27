@@ -1,5 +1,7 @@
 let currentStatus = null;
 
+const menuId = 'prerenderLink';
+
 function updateIcon(tabId, title, badgeText, badgeBgColor) {
   chrome.action.setTitle({ tabId: tabId, title: title });
   if (badgeText === undefined)
@@ -52,13 +54,13 @@ function checkPrerenderStatus(options) {
 function handleContentSwitch(options) {
   // update context menu rule.
   if (options || !options.url || !options.url.startsWith('http')) {
-    chrome.contextMenus.update('link', {});
+    chrome.contextMenus.update(menuId, {});
     return;
   }
   const url = new URL(options.url);
   const portString = url.port ? (':' + url.port) : '';
   const sameOriginPattern = url.protocol + '//' + url.host + portString + '/*';
-  chrome.contextMenus.update('link', { targetUrlPatterns: [sameOriginPattern] });
+  chrome.contextMenus.update(menuId, { targetUrlPatterns: [sameOriginPattern] });
 }
 
 // Hooks
@@ -87,14 +89,17 @@ function registerHooks() {
   });
 
   // Context menus.
+  chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
-    id: 'link',
+    id: menuId,
     contexts: ['link'],
     title: 'Prerender this link'
   });
   chrome.contextMenus.onClicked.addListener(
     (info, tab) => {
-      chrome.tabs.sendMessage(tab.id, { command: 'insertRule', url: info.linkUrl }, { frameId: 0 });
+      if (info.menuItemId == menuId) {
+        chrome.tabs.sendMessage(tab.id, { command: 'insertRule', url: info.linkUrl }, { frameId: 0 });
+      }
     });
 }
 
