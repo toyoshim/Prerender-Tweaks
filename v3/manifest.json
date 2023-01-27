@@ -3,7 +3,8 @@
   "manifest_version": 3,
   "version": "1.0",
   "action": {
-    "default_title": "Prerender Tweeks"
+    "default_title": "Prerender Tweeks",
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "main.js"
@@ -24,7 +25,8 @@
     "<all_urls>"
   ],
   "permissions": [
-    "tabs",
-    "contextMenus"
+    "contextMenus",
+    "storage",
+    "tabs"
   ]
 }

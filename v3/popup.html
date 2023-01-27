@@ -1,0 +1,57 @@
+<html>
+<head>
+<style>
+div {
+    font-size: 10pt;
+    margin-left: 8pt;
+    margin-right: 8pt;
+}
+div.group {
+    margin: 2pt;
+}
+div.title {
+    width: 300pt;
+    background: #77f;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    margin: 8pt;
+}
+div.section {
+    width: 300pt;
+    background: #337;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    margin: 8pt;
+}
+fieldset {
+    margin: 12pt;
+}
+</style>
+</head>
+<body width="100%">
+<div class="title">Prerender Tweaks</div>
+<div>
+<p>This Chrome Extension allows you to trigger prerenderingeven even if the site doesn't support it.</p>
+<p>'Prerender this link' menu item will also appear in a popup context menu if the anchor tag points a same-origin page.
+</div>
+
+<div class="section">Settings</div>
+<div>
+<p>Still not editable.</p>
+</div>
+<fieldset>
+<legend>Auto Injection</legend>
+<div class="group">
+<input type="checkbox" id="autoInjection">
+<label for="autoInjection">Enable</label>
+</div>
+<div>
+Inject at most one speculationrules automatically
+for a same-origin link that appears in an anchor tag in the page first.
+</div>
+</fieldset>
+<script src="popup.js"></script>
+</body>
+</html>
