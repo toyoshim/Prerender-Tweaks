@@ -6,6 +6,7 @@ import { Settings } from "./settings.js"
 import { getChromiumVersion } from "./utils.js"
 
 let currentStatus = null;
+let synchedSettings = null;
 
 const chromiumVersion = getChromiumVersion();
 const menuId = 'prerenderLink';
@@ -73,7 +74,9 @@ function handleContentSwitch(options) {
 }
 
 // Hooks
-function registerHooks() {
+async function registerHooks() {
+  synchedSettings = await settings.getSettings();
+
   // Tab switch.
   chrome.tabs.onActivated.addListener(activeInfo => {
     chrome.tabs.get(activeInfo.tabId, tab => {
@@ -101,6 +104,8 @@ function registerHooks() {
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.message === 'update') {
       updateStatus(sender.tab.id, message.status);
+    } else if (message.message === 'settings') {
+      sendResponse(synchedSettings);
     }
   });
 

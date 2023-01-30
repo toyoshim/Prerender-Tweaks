@@ -15,6 +15,7 @@ let prerenderStatus = {
   readyStateOnStart: document.readyState,
 };
 let queried = false;
+let settings = chrome.runtime.sendMessage(undefined, { message: 'settings' });
 
 // Make the activated status up to date.
 if (document.prerendering) {
@@ -24,8 +25,7 @@ if (document.prerendering) {
 }
 
 async function getRemoteSetting(key) {
-  // TODO
-  return true;
+  return (await settings)[key];
 }
 
 // Make the hasSpecrules status up to date, and notify the main.js on changes.

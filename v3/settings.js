@@ -6,24 +6,45 @@ export class Settings {
     AUTO_INJECTION = 'autoInjection';
 
     #defaultValues = {
-        'autoInjection': false,
+        autoInjection: false,
     };
+    #settings = null;
 
     constructor(chromiumVersion) {
         this.#defaultValues.autoInjection = chromiumVersion >= 110;
     }
 
+    async getSettings() {
+        await this.#initialize();
+        return this.#settings;
+    }
+
     async get(key) {
-        const result = await chrome.storage.local.get([key]);
-        if (result[key] === undefined) {
-            return this.#defaultValues[key];
-        }
-        return result[key];
+        await this.#initialize();
+        return this.#settings[key];
     }
 
     async set(key, value) {
+        await this.#initialize();
         const dict = {};
         dict[key] = value;
         chrome.storage.local.set(dict);
+    }
+
+    async #initialize() {
+        if (this.#settings != null) {
+            return;
+        }
+        this.#settings = await chrome.storage.local.get(Object.keys(this.#defaultValues));
+        for (let key in this.#defaultValues) {
+            if (key && this.#settings[key] === undefined) {
+                this.#settings[key] = this.#defaultValues[key];
+            }
+        }
+        chrome.storage.local.onChanged.addListener(changes => {
+            for (let key in changes) {
+                this.#settings[key] = changes[key].newValue;
+            }
+        });
     }
 }
