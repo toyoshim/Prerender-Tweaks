@@ -19,6 +19,11 @@ if (document.prerendering) {
   });
 }
 
+async function getRemoteSetting(key) {
+  // TODO
+  return true;
+}
+
 // Make the hasSpecrules status up to date, and notify the main.js on changes.
 function checkSpecrules(notify) {
   if (prerenderStatus.hasSpecrules)
@@ -62,7 +67,10 @@ window.addEventListener('pageshow', e => {
   chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
 });
 
-function injectSpecrules(url) {
+async function injectSpecrules(url) {
+  if (!await getRemoteSetting('autoInjection')) {
+    return;
+  }
   const rule = document.createElement('script');
   rule.type = 'speculationrules';
   rule.innerText = `{ "prerender": [ { "source": "list", "urls": [ "${url}" ] } ] }`;

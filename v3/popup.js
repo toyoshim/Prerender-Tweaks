@@ -1,10 +1,12 @@
-let chromiumVersion = 110;
-for (let brand of navigator.userAgentData.brands) {
-  if (brand.brand != 'Chromium' && brand.brand != 'Google Chrome')
-    continue;
-  console.log('detect ' + brand.brand + ' version ' + brand.version);
-  chromiumVersion = brand.version;
-}
+import { Settings } from "./settings.js"
+import { getChromiumVersion } from "./utils.js"
 
-document.getElementById('autoInjection').disabled = true;
-document.getElementById('autoInjection').checked = true;
+const chromiumVersion = getChromiumVersion();
+const settings = new Settings(chromiumVersion);
+
+let element = document.getElementById('autoInjection');
+element.disabled = chromiumVersion < 110;
+element.checked = await settings.get(settings.AUTO_INJECTION);
+element.addEventListener('click', e => {
+  settings.set(e.target.id, e.target.checked);
+});

@@ -1,6 +1,11 @@
+import { Settings } from "./settings.js"
+import { getChromiumVersion } from "./utils.js"
+
 let currentStatus = null;
 
+const chromiumVersion = getChromiumVersion();
 const menuId = 'prerenderLink';
+const settings = new Settings(chromiumVersion);
 
 function updateIcon(tabId, title, badgeText, badgeBgColor) {
   chrome.action.setTitle({ tabId: tabId, title: title });
@@ -80,6 +85,7 @@ function registerHooks() {
     if (changeInfo.status === 'loading' && changeInfo.url) {
       handleContentSwitch({ reason: 'onUpdated.loading', url: changeInfo.url });
     } else if (changeInfo.status === 'complete') {
+      // TODO: changeInfo.url is always missed here.
       if (changeInfo.url && changeInfo.url.startsWith('http')) {
         checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
       } else {
@@ -90,8 +96,9 @@ function registerHooks() {
 
   // Request from content script.
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if (message.message === 'update')
+    if (message.message === 'update') {
       updateStatus(sender.tab.id, message.status);
+    }
   });
 
   // Context menus.
@@ -109,13 +116,6 @@ function registerHooks() {
     });
 }
 
-let chromiumVersion = 110;
-for (let brand of navigator.userAgentData.brands) {
-  if (brand.brand != 'Chromium' && brand.brand != 'Google Chrome')
-    continue;
-  console.log('detect ' + brand.brand + ' version ' + brand.version);
-  chromiumVersion = brand.version;
-}
 if (chromiumVersion < 110) {
   chrome.tabs.query({ active: true, lastFocusedWindow: true},
     tab => {
