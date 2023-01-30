@@ -71,25 +71,32 @@ window.addEventListener('pageshow', e => {
   chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
 });
 
-async function injectSpecrules(url) {
+async function injectSpecrules(urls) {
   if (!await getRemoteSetting('autoInjection')) {
     return;
   }
+  let rules = [];
+  for (let url of urls) {
+    rules.push(`{ "source": "list", "urls": [ "${url}" ] }`);
+  }
   const rule = document.createElement('script');
   rule.type = 'speculationrules';
-  rule.innerText = `{ "prerender": [ { "source": "list", "urls": [ "${url}" ] } ] }`;
+  rule.innerText = '{ "prerender": [ ' + rules.join(',') + ' ] }';
   document.head.appendChild(rule);
-  console.log('injecting speculationrules for ' + url);
-
+  console.log('injecting speculationrules:');
+  for (let url of urls) {
+    console.log(' * ' + url);
+  }
   prerenderStatus.hasInjectedSpecrules = true;
 }
 
 // Inject a speculationrules for the first anchor tag on the load completion.
-function tryInjectingSpecrules() {
+async function tryInjectingSpecrules() {
   if (prerenderStatus.hasSpecrules || prerenderStatus.hasInjectedSpecrules)
     return;
 
-  let url = undefined;
+  let urls = [];
+  const maxRules = await getRemoteSetting('maxRulesByAnchors');
   for (let a of document.getElementsByTagName('a')) {
     const href = new URL(a.href, document.baseURI);
     if (href.origin !== document.location.origin)
@@ -101,12 +108,18 @@ function tryInjectingSpecrules() {
       if (href.href[urlLen] == '#' || href.href[urlLen] == '?')
         continue;
     }
-    url = href.href;
-    break;
+    if (urls.indexOf(href.href) >= 0) {
+      // Same link is already in the list.
+      continue;
+    }
+    urls.push(href.href);
+    if (urls.length == maxRules) {
+      break;
+    }
   }
-  if (!url)
+  if (urls.length == 0)
     return;
-  injectSpecrules(url);
+  injectSpecrules(urls);
 }
 if (document.readyState === 'complete') {
   tryInjectingSpecrules();
@@ -122,6 +135,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
-    injectSpecrules(message.url);
+    injectSpecrules([message.url]);
   }
 });

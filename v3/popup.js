@@ -8,9 +8,30 @@ import { getChromiumVersion } from "./utils.js"
 const chromiumVersion = getChromiumVersion();
 const settings = new Settings(chromiumVersion);
 
-let element = document.getElementById('autoInjection');
-element.disabled = chromiumVersion < 110;
-element.checked = await settings.get(settings.AUTO_INJECTION);
-element.addEventListener('click', e => {
-  settings.set(e.target.id, e.target.checked);
-});
+let fields = {
+  'autoInjection': {
+    type: 'boolean',
+    isDisabled: () => chromiumVersion < 110,
+  },
+  'maxRulesByAnchors': {
+    type: 'number',
+  },
+};
+
+for (let key in fields) {
+  let element = document.getElementById(key);
+  if (fields[key].isDisabled) {
+    element.disabled = fields[key].isDisabled();
+  }
+  if (fields[key].type == 'boolean') {
+    element.checked = await settings.get(key);
+    element.addEventListener('click', e => {
+      settings.set(e.target.id, e.target.checked);
+    });
+  } else if (fields[key].type == 'number') {
+    element.value = await settings.get(key);
+    element.addEventListener('change', e => {
+      settings.set(e.target.id, e.target.value);
+    });
+  }
+}
