@@ -89,8 +89,7 @@ function registerHooks() {
     if (changeInfo.status === 'loading' && changeInfo.url) {
       handleContentSwitch({ reason: 'onUpdated.loading', url: changeInfo.url });
     } else if (changeInfo.status === 'complete') {
-      // TODO: changeInfo.url is always missed here.
-      if (changeInfo.url && changeInfo.url.startsWith('http')) {
+      if (tab.url && tab.url.startsWith('http')) {
         checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
       } else {
         updateIcon(tab.id, 'Unsupported page', 'X', '#f77');
