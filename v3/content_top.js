@@ -135,6 +135,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
+    // TODO: Check if the rule for the url is already in the list.
     injectSpecrules([message.url]);
   }
 });
