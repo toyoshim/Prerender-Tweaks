@@ -17,6 +17,7 @@ let prerenderStatus = {
 let queried = false;
 let settings = chrome.runtime.sendMessage(undefined, { message: 'settings' });
 let prerenderedUrls = [];
+let candidateUrls = {};
 
 // Make the activated status up to date.
 if (document.prerendering) {
@@ -54,8 +55,37 @@ function checkSpecrules() {
   chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
 }
 
+function monitorAnchors() {
+  const monitorMarkName = 'prerender-tweaks-monitoring';
+  for (let anchor of document.getElementsByTagName('a')) {
+    if (anchor.hasAttribute(monitorMarkName)) {
+      continue;
+    }
+    anchor.setAttribute(monitorMarkName, 'yes');
+    if (prerenderedUrls.indexOf(anchor.href) >= 0) {
+      continue;
+    }
+    anchor.addEventListener('mouseenter', e => {
+      if (candidateUrls[e.target.href]) {
+        return;
+      }
+      candidateUrls[e.target.href] = true;
+      setTimeout(() => {
+        if (candidateUrls[e.target.href]) {
+          injectSpecrules([e.target.href]);
+          // TODO: remove it after a certain time period.
+        }
+      }, 0);
+    });
+    anchor.addEventListener('mouseleave', e => {
+      delete candidateUrls[e.target.href];
+    });
+  }
+}
+
 function scanContent() {
   checkSpecrules();
+  monitorAnchors();
 }
 
 // Inject speculationrules for specified URLs.
@@ -72,13 +102,14 @@ async function injectSpecrules(urls) {
     console.log(' * ' + url);
   }
   if (rules.length == 0) {
-    return;
+    return null;
   }
   const rule = document.createElement('script');
   rule.type = 'speculationrules';
   rule.innerText = '{ "prerender": [ ' + rules.join(',') + ' ] }';
   document.head.appendChild(rule);
   prerenderStatus.hasInjectedSpecrules = true;
+  return rule;
 }
 
 // Inject a speculationrules for the first N anchor tag on the load completion.
