@@ -16,6 +16,10 @@ let fields = {
   'maxRulesByAnchors': {
     type: 'number',
   },
+  'anchorHoverInjection': {
+    type: 'boolean',
+    isDisabled: () => chromiumVersion < 110,
+  }
 };
 
 for (let key in fields) {

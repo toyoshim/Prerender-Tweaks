@@ -8,6 +8,7 @@ export class Settings {
   #defaultValues = {
     autoInjection: false,
     maxRulesByAnchors: 5,
+    anchorHoverInjection: true,
   };
   #settings = null;
 

@@ -43,9 +43,6 @@ fieldset {
 </div>
 
 <div class="section">Settings</div>
-<div>
-<p>Still not editable.</p>
-</div>
 <fieldset>
 <legend>Auto Injection</legend>
 <div class="group">
@@ -57,8 +54,17 @@ fieldset {
 )
 </div>
 <div>
-Inject at most one speculationrules automatically
-for a same-origin link that appears in an anchor tag in the page first.
+Inject speculationrules automatically
+for a same-origin link that appears at anchor tags in the page.
+The first N links limited above will be prerendered.
+</div>
+</fieldset>
+<fieldset>
+<legend>Prerender on Anchor Hover</legend>
+<input type="checkbox" id="anchorHoverInjection">
+<label for"anchorHoverInjection">Enable</label>
+<div>
+Inject speculationrules when mouse moves over an anchor tag that points to a same-origin page.
 </div>
 </fieldset>
 <script type="module" src="popup.js"></script>

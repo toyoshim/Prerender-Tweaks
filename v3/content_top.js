@@ -23,6 +23,7 @@ let candidateUrls = {};
 if (document.prerendering) {
   document.addEventListener('prerenderingchange', () => {
     prerenderStatus.activated = true;
+    chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
   });
 }
 
@@ -37,6 +38,35 @@ window.addEventListener('pageshow', e => {
 // Obtains Extensions settings delivered at the script start time.
 async function getRemoteSetting(key) {
   return (await settings)[key];
+}
+
+// Check if the link that is potentially relative URL can be prerendered.
+function isPrerenderableLink(href) {
+  const url = new URL(href, document.baseURI);
+
+  // Already prerendered.
+  if (prerenderedUrls.indexOf(url.href) >= 0) {
+    return false;
+  }
+
+  // Same-origin check.
+  if (url.origin !== document.location.origin) {
+    return false;
+  }
+  const baseUrl = document.location.href.substring(
+      0, document.location.href.length - document.location.hash.length);
+  if (url.href.startsWith(baseUrl)) {
+    const urlLen = baseUrl.length;
+    // Link to the current page.
+    if (url.href.length == urlLen) {
+      return false;
+    }
+    // Link to the segment or the current page with a query.
+    if (url.href[urlLen] == '#' || url.href[urlLen] == '?') {
+      return false;
+    }
+  }
+  return true;
 }
 
 // Make the hasSpecrules status up to date, and notify the main.js on changes.
@@ -55,14 +85,18 @@ function checkSpecrules() {
   chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
 }
 
-function monitorAnchors() {
+// Monitor anchor tags.
+async function monitorAnchors() {
+  if (!await getRemoteSetting('anchorHoverInjection')) {
+    return;
+  }
   const monitorMarkName = 'prerender-tweaks-monitoring';
   for (let anchor of document.getElementsByTagName('a')) {
     if (anchor.hasAttribute(monitorMarkName)) {
       continue;
     }
     anchor.setAttribute(monitorMarkName, 'yes');
-    if (prerenderedUrls.indexOf(anchor.href) >= 0) {
+    if (!isPrerenderableLink(anchor.href)) {
       continue;
     }
     anchor.addEventListener('mouseenter', e => {
@@ -72,7 +106,8 @@ function monitorAnchors() {
       candidateUrls[e.target.href] = true;
       setTimeout(() => {
         if (candidateUrls[e.target.href]) {
-          injectSpecrules([e.target.href]);
+          const url = new URL(e.target.href, document.baseURI);
+          injectSpecrules([url.href]);
           // TODO: remove it after a certain time period.
         }
       }, 0);
@@ -124,21 +159,11 @@ async function tryInjectingSpecrules() {
   let urls = [];
   const maxRules = await getRemoteSetting('maxRulesByAnchors');
   for (let a of document.getElementsByTagName('a')) {
-    const href = new URL(a.href, document.baseURI);
-    if (href.origin !== document.location.origin)
-      continue;
-    if (href.href.startsWith(document.location.href)) {
-      const urlLen = document.location.href.length;
-      if (href.href.length == urlLen)
-        continue;
-      if (href.href[urlLen] == '#' || href.href[urlLen] == '?')
-        continue;
-    }
-    if (urls.indexOf(href.href) >= 0) {
-      // Same link is already in the list.
+    if (!isPrerenderableLink(a.href)) {
       continue;
     }
-    urls.push(href.href);
+    const url = new URL(a.href, document.baseURI);
+    urls.push(url.href);
     if (urls.length == maxRules) {
       break;
     }
