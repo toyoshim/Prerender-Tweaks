@@ -22,6 +22,7 @@ let candidateUrls = {};
 // Make the activated status up to date.
 if (document.prerendering) {
   document.addEventListener('prerenderingchange', () => {
+    prerenderStatus.prerendered = true;
     prerenderStatus.activated = true;
     chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
   });
@@ -80,6 +81,12 @@ function checkSpecrules() {
     prerenderStatus.hasSpecrules = true;
     break;
   }
+  // Make sure that prerendering is actually not used.
+  // Content script may overlook if activation happens before the inejction.
+  if (performance.getEntriesByType('navigation')[0].activationStart > 0) {
+    prerenderState.prerendered = true;
+    prerenderState.activated = true;
+  }
   if (!queried || (prerenderStatus.prerendered && !prerenderStatus.activated))
     return;
   chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
@@ -121,6 +128,30 @@ async function monitorAnchors() {
 function scanContent() {
   checkSpecrules();
   monitorAnchors();
+}
+
+function reportMetrics() {
+  const observer = new PerformanceObserver(list=> {
+    const entries = list.getEntries();
+    const lastEntry = entries[entries.length - 1];
+    const navigationEntry = performance.getEntriesByType('navigation')[0];
+    // Follow up the case activation happens before the script injection.
+    prerenderStatus.prerendered = navigationEntry.activationStart > 0;
+    prerenderStatus.activated = navigationEntry.activationStart > 0;
+
+    // send metrics to the background Extension service.
+    chrome.runtime.sendMessage(undefined, {
+       message: 'metrics',
+       prerendered: prerenderStatus.prerendered,
+       restoredFromBFCache: prerenderStatus.restoredFromBFCache,
+       activationStart: navigationEntry.activationStart,
+       largestContentfulPaint: lastEntry.startTime,
+       effectiveLargestContentfulPaintp: lastEntry.startTime - navigationEntry.activationStart,
+       url: document.location.href,
+       origin: document.location.origin
+     });
+  });
+  observer.observe({ type: 'largest-contentful-paint', buffered: true });
 }
 
 // Inject speculationrules for specified URLs.
@@ -197,10 +228,12 @@ if (document.readyState === 'loading') {
 // Auto injection on page load completion.
 if (document.readyState === 'complete') {
   tryInjectingSpecrules();
+  reportMetrics();
 } else {
   window.addEventListener('load', e => {
     scanContent();
     tryInjectingSpecrules();
+    reportMetrics();
   });
 }
 

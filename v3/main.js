@@ -106,6 +106,8 @@ async function registerHooks() {
       updateStatus(sender.tab.id, message.status);
     } else if (message.message === 'settings') {
       sendResponse(synchedSettings);
+    } else if (message.message === 'metrics') {
+      console.log(message);
     }
   });
 
