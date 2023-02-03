@@ -3,8 +3,6 @@
 // found in the LICENSE file.
 
 export class Settings {
-  AUTO_INJECTION = 'autoInjection';
-
   #defaultValues = {
     autoInjection: false,
     maxRulesByAnchors: 5,
