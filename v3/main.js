@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import { Settings } from "./settings.js"
+import { Metrics } from "./metrics.js"
 import { getChromiumVersion } from "./utils.js"
 
 let currentStatus = null;
@@ -11,6 +12,7 @@ let synchedSettings = null;
 const chromiumVersion = getChromiumVersion();
 const menuId = 'prerenderLink';
 const settings = new Settings(chromiumVersion);
+const metrics = new Metrics();
 
 function updateIcon(tabId, title, badgeText, badgeBgColor) {
   chrome.action.setTitle({ tabId: tabId, title: title });
@@ -107,7 +109,21 @@ async function registerHooks() {
     } else if (message.message === 'settings') {
       sendResponse(synchedSettings);
     } else if (message.message === 'metrics') {
-      console.log(message);
+      if (await settings.get('recordMetrics')) {
+        metrics.reportEffectiveLcp(
+            message.origin,
+            message.prerendered,
+            message.effectiveLargestContentfulPaint);
+      }
+    } else if (message.message == 'clearAllMetrics')  {
+      metrics.clearAll();
+    } else if (message.message == 'clearOriginMetrics')  {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true}, tab => {
+        const url = new URL(tab[0].url);
+        metrics.clearFor(url.origin);
+      });
+    } else if (message.message == 'debug')  {
+      metrics.dumpToLog();
     }
   });
 
@@ -129,7 +145,7 @@ async function registerHooks() {
 if (chromiumVersion < 110) {
   chrome.tabs.query({ active: true, lastFocusedWindow: true},
     tab => {
-      updateIcon(tab.id, 'Prerender Tweaks requires Chrome 110+', 'X', '#f00');
+      updateIcon(tab[0].id, 'Prerender Tweaks requires Chrome 110+', 'X', '#f00');
     });
 } else {
   registerHooks();

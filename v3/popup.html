@@ -33,6 +33,9 @@ div.section {
 fieldset {
     margin: 12pt;
 }
+button {
+    margin: 4pt;
+}
 </style>
 </head>
 <body width="100%">
@@ -43,6 +46,7 @@ fieldset {
 </div>
 
 <div class="section">Settings</div>
+
 <fieldset>
 <legend>Auto Injection</legend>
 <div class="group">
@@ -59,14 +63,28 @@ for a same-origin link that appears at anchor tags in the page.
 The first N links limited above will be prerendered.
 </div>
 </fieldset>
+
 <fieldset>
 <legend>Prerender on Anchor Hover</legend>
 <input type="checkbox" id="anchorHoverInjection">
-<label for"anchorHoverInjection">Enable</label>
+<label for="anchorHoverInjection">Enable</label>
 <div>
 Inject speculationrules when mouse moves over an anchor tag that points to a same-origin page.
 </div>
 </fieldset>
+
+<fieldset>
+<legend>Statistics</legend>
+<input type="checkbox" id="recordMetrics">
+<label for="recordMetrics">Enable</label>
+<div>
+Record largest contentful paint in a local database to evaluate page load performance.
+</div>
+<button id="clearAll">Clear All</button>
+<button id="clearFor">Clear for the current page Origin</button>
+<button id="debug">Debug</button>
+</fieldset>
+
 <script type="module" src="popup.js"></script>
 </body>
 </html>

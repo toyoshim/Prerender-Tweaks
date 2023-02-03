@@ -19,6 +19,9 @@ let fields = {
   'anchorHoverInjection': {
     type: 'boolean',
     isDisabled: () => chromiumVersion < 110,
+  },
+  'recordMetrics': {
+    type: 'boolean'
   }
 };
 
@@ -39,3 +42,15 @@ for (let key in fields) {
     });
   }
 }
+
+document.getElementById('clearAll').addEventListener('click', e => {
+  chrome.runtime.sendMessage(undefined, { message: 'clearAllMetrics' });
+});
+
+document.getElementById('clearFor').addEventListener('click', e => {
+  chrome.runtime.sendMessage(undefined, { message: 'clearOriginMetrics' });
+});
+
+document.getElementById('debug').addEventListener('click', e => {
+  chrome.runtime.sendMessage(undefined, { message: 'debug' });
+});
