@@ -1,7 +1,7 @@
 {
   "name": "Prerender Tweaks",
   "manifest_version": 3,
-  "version": "1.0.1",
+  "version": "1.1.0",
   "action": {
     "default_title": "Prerender Tweeks",
     "default_popup": "popup.html"
