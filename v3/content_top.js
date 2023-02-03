@@ -84,8 +84,8 @@ function checkSpecrules() {
   // Make sure that prerendering is actually not used.
   // Content script may overlook if activation happens before the inejction.
   if (performance.getEntriesByType('navigation')[0].activationStart > 0) {
-    prerenderState.prerendered = true;
-    prerenderState.activated = true;
+    prerenderStatus.prerendered = true;
+    prerenderStatus.activated = true;
   }
   if (!queried || (prerenderStatus.prerendered && !prerenderStatus.activated))
     return;
@@ -146,7 +146,7 @@ function reportMetrics() {
        restoredFromBFCache: prerenderStatus.restoredFromBFCache,
        activationStart: navigationEntry.activationStart,
        largestContentfulPaint: lastEntry.startTime,
-       effectiveLargestContentfulPaintp: lastEntry.startTime - navigationEntry.activationStart,
+       effectiveLargestContentfulPaint: lastEntry.startTime - navigationEntry.activationStart,
        url: document.location.href,
        origin: document.location.origin
      });
