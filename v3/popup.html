@@ -45,6 +45,11 @@ button {
 <p>'Prerender this link' menu item will also appear in a popup context menu if the anchor tag points a same-origin page.
 </div>
 
+<div class="section">Statistics</div>
+
+<canvas id="lcp_origin"></canvas>
+<canvas id="lcp_all"></canvas>
+
 <div class="section">Settings</div>
 
 <fieldset>
@@ -82,9 +87,9 @@ Record largest contentful paint in a local database to evaluate page load perfor
 </div>
 <button id="clearAll">Clear All</button>
 <button id="clearFor">Clear for the current page Origin</button>
-<button id="debug">Debug</button>
 </fieldset>
 
+<script src="third_party/chart.js"></script>
 <script type="module" src="popup.js"></script>
 </body>
 </html>

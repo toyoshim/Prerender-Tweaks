@@ -89,6 +89,20 @@ export class Metrics {
     // TODO: update per-origin variants
   }
 
+  async getLcp(origin) {
+    await this.#initialize();
+    const lcp = {
+      lcp_all_n: this.#lcp_n[0],
+      lcp_all_p: this.#lcp_p[0]
+    };
+    if (this.#index[origin]) {
+      const index = await this.#warmupFor(origin);
+      lcp.lcp_origin_n = this.#lcp_n[index];
+      lcp.lcp_origin_p = this.#lcp_p[index];
+    }
+    return lcp;
+  }
+
   async #initialize() {
     if (this.#index != null) {
       return;

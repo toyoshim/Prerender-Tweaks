@@ -3,10 +3,12 @@
 // found in the LICENSE file.
 
 import { Settings } from "./settings.js"
+import { Metrics } from "./metrics.js"
 import { getChromiumVersion } from "./utils.js"
 
 const chromiumVersion = getChromiumVersion();
 const settings = new Settings(chromiumVersion);
+const metrics = new Metrics();
 
 let fields = {
   'autoInjection': {
@@ -51,6 +53,65 @@ document.getElementById('clearFor').addEventListener('click', e => {
   chrome.runtime.sendMessage(undefined, { message: 'clearOriginMetrics' });
 });
 
-document.getElementById('debug').addEventListener('click', e => {
-  chrome.runtime.sendMessage(undefined, { message: 'debug' });
+const labels = [];
+for (let i = 0; i <= 30; ++i) {
+  labels.push((i * 100).toString() + '-');
+}
+const tab = await chrome.tabs.query({ active: true, lastFocusedWindow: true});
+const url = new URL(tab[0].url);
+const lcp = await metrics.getLcp(url.origin);
+
+function getAverage(data) {
+  if (!data) {
+    return '-';
+  }
+  return (data.total / data.count / 1000).toString().substring(0, 5) + ' [ms]';
+}
+
+const lcp_origin_chart = new Chart(document.getElementById('lcp_origin'), {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Prerendered LCP (avg: ' + getAverage(lcp.lcp_origin_p) + ')',
+      data: lcp.lcp_origin_p ? lcp.lcp_origin_p.bucket.map(d => d / lcp.lcp_origin_p.count) : [],
+      borderWidth: 1
+    }, {
+      label: 'Non-Prerendered LCP (avg: ' + getAverage(lcp.lcp_origin_n) + ')',
+      data: lcp.lcp_origin_n ? lcp.lcp_origin_n.bucket.map(d => d / lcp.lcp_origin_n.count) : [],
+      borderWidth: 1
+    }]
+  },
+  options: {
+    plugins: {
+      title: {
+        display: true,
+        text: 'Largest-Contentful-Paint for ' + url.origin
+      }
+    }
+  }
+});
+
+const lcp_all_chart = new Chart(document.getElementById('lcp_all'), {
+  type: 'bar',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Prerendered LCP (avg: ' + getAverage(lcp.lcp_all_p) + ')',
+      data: lcp.lcp_all_p.bucket.map(d => d / lcp.lcp_all_p.count),
+      borderWidth: 1
+    }, {
+      label: 'Non-Prerendered LCP (avg: ' + getAverage(lcp.lcp_all_n) + ')',
+      data: lcp.lcp_all_n.bucket.map(d => d / lcp.lcp_all_n.count),
+      borderWidth: 1
+    }]
+  },
+  options: {
+    plugins: {
+      title: {
+        display: true,
+        text: 'Largest-Contentful-Paint for All Sites'
+      }
+    }
+  }
 });
