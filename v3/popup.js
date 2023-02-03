@@ -55,7 +55,7 @@ document.getElementById('clearFor').addEventListener('click', e => {
 
 const labels = [];
 for (let i = 0; i <= 30; ++i) {
-  labels.push((i * 100).toString() + '-');
+  labels.push(((i * 0.1).toString() + '.0').substring(0, 3));
 }
 const tab = await chrome.tabs.query({ active: true, lastFocusedWindow: true});
 const url = new URL(tab[0].url);
@@ -65,7 +65,7 @@ function getAverage(data) {
   if (!data) {
     return '-';
   }
-  return (data.total / data.count / 1000).toString().substring(0, 5) + ' [ms]';
+  return (data.total / data.count / 1000).toString().substring(0, 5) + ' [sec]';
 }
 
 const lcp_origin_chart = new Chart(document.getElementById('lcp_origin'), {
