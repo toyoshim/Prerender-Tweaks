@@ -102,10 +102,11 @@ async function monitorAnchors() {
     if (anchor.hasAttribute(monitorMarkName)) {
       continue;
     }
-    anchor.setAttribute(monitorMarkName, 'yes');
     if (!isPrerenderableLink(anchor.href)) {
+      anchor.setAttribute(monitorMarkName, 'no');
       continue;
     }
+    anchor.setAttribute(monitorMarkName, 'yes');
     anchor.addEventListener('mouseenter', e => {
       if (candidateUrls[e.target.href]) {
         return;
