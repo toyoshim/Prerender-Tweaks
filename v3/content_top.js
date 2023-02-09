@@ -138,6 +138,8 @@ function reportMetrics() {
     // Follow up the case activation happens before the script injection.
     prerenderStatus.prerendered = navigationEntry.activationStart > 0;
     prerenderStatus.activated = navigationEntry.activationStart > 0;
+    const effectiveLargestContentfulPaint = Math.max(
+       lastEntry.startTime - navigationEntry.activationStart, 0);
 
     // send metrics to the background Extension service.
     chrome.runtime.sendMessage(undefined, {
@@ -146,7 +148,7 @@ function reportMetrics() {
        restoredFromBFCache: prerenderStatus.restoredFromBFCache,
        activationStart: navigationEntry.activationStart,
        largestContentfulPaint: lastEntry.startTime,
-       effectiveLargestContentfulPaint: lastEntry.startTime - navigationEntry.activationStart,
+       effectiveLargestContentfulPaint: effectiveLargestContentfulPaint,
        url: document.location.href,
        origin: document.location.origin
      });
