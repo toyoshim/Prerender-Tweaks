@@ -97,6 +97,7 @@ async function monitorAnchors() {
   if (!await getRemoteSetting('anchorHoverInjection')) {
     return;
   }
+  // TODO: may be better to check the 'src' attribute again as the link may be changed.
   const monitorMarkName = 'prerender-tweaks-monitoring';
   for (let anchor of document.getElementsByTagName('a')) {
     if (anchor.hasAttribute(monitorMarkName)) {
