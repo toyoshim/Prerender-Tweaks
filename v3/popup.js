@@ -68,21 +68,41 @@ function getAverage(data) {
   return (data.total / data.count / 1000).toString().substring(0, 5) + ' [sec]';
 }
 
+const scaleOption = {
+  x: {
+    title: {
+      display: true,
+      text: '[second]',
+      align: 'end'
+    }
+  },
+  y: {
+    ticks: {
+      callback: value => { return value + '%'; }
+    }
+  }
+};
+
 const lcp_origin_chart = new Chart(document.getElementById('lcp_origin'), {
   type: 'bar',
   data: {
     labels: labels,
     datasets: [{
       label: 'Prerendered LCP (avg: ' + getAverage(lcp.lcp_origin_p) + ')',
-      data: lcp.lcp_origin_p ? lcp.lcp_origin_p.bucket.map(d => d / lcp.lcp_origin_p.count) : [],
-      borderWidth: 1
+      data: lcp.lcp_origin_p ? lcp.lcp_origin_p.bucket.map(d => d * 100 / lcp.lcp_origin_p.count) : [],
+      borderWidth: 1,
+      xAxisID: 'x',
+      yAxisID: 'y'
     }, {
       label: 'Non-Prerendered LCP (avg: ' + getAverage(lcp.lcp_origin_n) + ')',
-      data: lcp.lcp_origin_n ? lcp.lcp_origin_n.bucket.map(d => d / lcp.lcp_origin_n.count) : [],
-      borderWidth: 1
+      data: lcp.lcp_origin_n ? lcp.lcp_origin_n.bucket.map(d => d * 100 / lcp.lcp_origin_n.count) : [],
+      borderWidth: 1,
+      xAxisID: 'x',
+      yAxisID: 'y'
     }]
   },
   options: {
+    scales: scaleOption,
     plugins: {
       title: {
         display: true,
@@ -98,15 +118,20 @@ const lcp_all_chart = new Chart(document.getElementById('lcp_all'), {
     labels: labels,
     datasets: [{
       label: 'Prerendered LCP (avg: ' + getAverage(lcp.lcp_all_p) + ')',
-      data: lcp.lcp_all_p.bucket.map(d => d / lcp.lcp_all_p.count),
-      borderWidth: 1
+      data: lcp.lcp_all_p.bucket.map(d => d * 100 / lcp.lcp_all_p.count),
+      borderWidth: 1,
+      xAxisID: 'x',
+      yAxisID: 'y'
     }, {
       label: 'Non-Prerendered LCP (avg: ' + getAverage(lcp.lcp_all_n) + ')',
-      data: lcp.lcp_all_n.bucket.map(d => d / lcp.lcp_all_n.count),
-      borderWidth: 1
+      data: lcp.lcp_all_n.bucket.map(d => d * 100 / lcp.lcp_all_n.count),
+      borderWidth: 1,
+      xAxisID: 'x',
+      yAxisID: 'y'
     }]
   },
   options: {
+    scales: scaleOption,
     plugins: {
       title: {
         display: true,
