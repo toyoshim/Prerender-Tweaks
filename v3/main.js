@@ -4,6 +4,7 @@
 
 import { Settings } from "./settings.js"
 import { Metrics } from "./metrics.js"
+import { NavigationTracker } from "./navigation_tracker.js"
 import { getChromiumVersion } from "./utils.js"
 
 let currentStatus = null;
@@ -13,6 +14,7 @@ const chromiumVersion = getChromiumVersion();
 const menuId = 'prerenderLink';
 const settings = new Settings(chromiumVersion);
 const metrics = new Metrics();
+const tracker = new NavigationTracker();
 
 function updateIcon(tabId, title, badgeText, badgeBgColor) {
   chrome.action.setTitle({ tabId: tabId, title: title });
@@ -125,6 +127,11 @@ async function registerHooks() {
     } else if (message.message == 'debug')  {
       metrics.dumpToLog();
     }
+  });
+
+  // Dispatch tracking prediction events.
+  tracker.observe(e => {
+    console.log(e);
   });
 
   // Context menus.
