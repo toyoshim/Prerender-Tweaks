@@ -14,6 +14,8 @@ export class Settings {
 
   constructor(chromiumVersion) {
     this.#defaultValues.autoInjection = chromiumVersion >= 110;
+    this.#defaultValues.anchorHoverInjection = chromiumVersion >= 110;
+    this.#defaultValues.lastVisitInjection = chromiumVersion >= 110;
   }
 
   async getSettings() {
