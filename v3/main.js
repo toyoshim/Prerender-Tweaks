@@ -3,66 +3,24 @@
 // found in the LICENSE file.
 
 import { Settings } from "./settings.js"
+import { StatusManager } from "./status_manager.js"
 import { Metrics } from "./metrics.js"
 import { NavigationTracker } from "./navigation_tracker.js"
 import { getChromiumVersion } from "./utils.js"
 
-let currentStatus = null;
 let synchedSettings = null;
 let lastPrediction = {};
 
 const chromiumVersion = getChromiumVersion();
 const menuId = 'prerenderLink';
 const settings = new Settings(chromiumVersion);
+const status = new StatusManager();
 const metrics = new Metrics();
 const tracker = new NavigationTracker();
 
-function updateIcon(tabId, title, badgeText, badgeBgColor) {
-  chrome.action.setTitle({ tabId: tabId, title: title });
-  if (badgeText === undefined)
-    badgeText = '';
-  chrome.action.setBadgeText({ tabId: tabId, text: badgeText });
-  if (badgeBgColor) {
-    chrome.action.setBadgeBackgroundColor({ tabId: tabId, color: badgeBgColor });
-  }
-}
-
-function updateStatus(tabId, status) {
-  currentStatus = status;
-  if (!status)
-    return;
-  let text = '|';
-  let color = undefined;
-  let title = 'Prerender Tweaks';
-  if (status.restoredFromBFCache) {
-    text += '$|';
-    color = '#f0f';
-    title += '\nRestored from BFCache';
-  } else {
-    if (status.prerendered) {
-      text += 'P|';
-      color = '#00f';
-      title += '\nPrerendered';
-    }
-    if (status.hasInjectedSpecrules) {
-      text += 'I|';
-      if (!color)
-        color = '#ff0';
-      title += '\nPage contains tweaked speculationrules';
-    } else if (status.hasSpecrules) {
-      text += 'S|';
-      color = '#0f0';
-      title += '\nPage contains speculationrules';
-    }
-  }
-  if (text === '|')
-    text = '';
-  updateIcon(tabId, title, text, color);
-}
-
 function checkPrerenderStatus(options) {
-  chrome.tabs.sendMessage(options.tabId, { command: 'queryStatus' }, { frameId: 0 }, status => {
-    updateStatus(options.tabId, status);
+  chrome.tabs.sendMessage(options.tabId, { command: 'queryStatus' }, { frameId: 0 }, contentStatus => {
+    status.update(options.tabId, contentStatus);
   });
 }
 
@@ -103,7 +61,7 @@ async function registerHooks() {
         }
         checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
       } else {
-        updateIcon(tab.id, 'Unsupported page', 'X', '#f77');
+        status.update(tab.id, { unsupportedPage: true });
       }
     }
   });
@@ -111,7 +69,7 @@ async function registerHooks() {
   // Request from content script.
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.message === 'update') {
-      updateStatus(sender.tab.id, message.status);
+      status.update(sender.tab.id, message.status);
     } else if (message.message === 'settings') {
       sendResponse(synchedSettings);
     } else if (message.message === 'metrics') {
@@ -156,11 +114,6 @@ async function registerHooks() {
     });
 }
 
-if (chromiumVersion < 110) {
-  chrome.tabs.query({ active: true, lastFocusedWindow: true},
-    tab => {
-      updateIcon(tab[0].id, 'Prerender Tweaks requires Chrome 110+', 'X', '#f00');
-    });
-} else {
+if (chromiumVersion >= 110) {
   registerHooks();
 }
