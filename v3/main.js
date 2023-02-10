@@ -33,7 +33,7 @@ async function registerHooks() {
   chrome.tabs.onActivated.addListener(activeInfo => {
     chrome.tabs.get(activeInfo.tabId, tab => {
       if (tab.url.startsWith('http')) {
-        checkPrerenderStatus({ reason: 'onActivated', tabId: activeInfo.tabId, windowId: activeInfo.windowId });
+        checkPrerenderStatus({ tabId: activeInfo.tabId, windowId: activeInfo.windowId });
       }
     });
   });
@@ -45,14 +45,14 @@ async function registerHooks() {
         if (tabId == lastPrediction.tab) {
           chrome.tabs.sendMessage(tabId, { command: 'insertRule', url: lastPrediction.to }, { frameId: 0 });
         }
-        checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
+        checkPrerenderStatus({ tabId: tabId, windowId: tab.windowId });
       } else {
         status.update(tab.id, { unsupportedPage: true });
       }
     }
   });
 
-  // Request from content script.
+  // Request from content script and popup page.
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.message === 'update') {
       status.update(sender.tab.id, message.status);
