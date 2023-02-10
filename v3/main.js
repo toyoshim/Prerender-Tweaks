@@ -9,6 +9,7 @@ import { getChromiumVersion } from "./utils.js"
 
 let currentStatus = null;
 let synchedSettings = null;
+let lastPrediction = {};
 
 const chromiumVersion = getChromiumVersion();
 const menuId = 'prerenderLink';
@@ -97,6 +98,9 @@ async function registerHooks() {
       handleContentSwitch({ reason: 'onUpdated.loading', url: changeInfo.url });
     } else if (changeInfo.status === 'complete') {
       if (tab.url && tab.url.startsWith('http')) {
+        if (tabId == lastPrediction.tab) {
+          chrome.tabs.sendMessage(tabId, { command: 'insertRule', url: lastPrediction.to }, { frameId: 0 });
+        }
         checkPrerenderStatus({ reason: 'onUpdated.complete', tabId: tabId, windowId: tab.windowId });
       } else {
         updateIcon(tab.id, 'Unsupported page', 'X', '#f77');
@@ -132,6 +136,9 @@ async function registerHooks() {
   // Dispatch tracking prediction events.
   tracker.observe(e => {
     console.log(e);
+    if (e.event == 'predict') {
+      lastPrediction = e;
+    }
   });
 
   // Context menus.

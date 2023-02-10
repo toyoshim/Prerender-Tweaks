@@ -13,14 +13,18 @@ const metrics = new Metrics();
 let fields = {
   'autoInjection': {
     type: 'boolean',
-    isDisabled: () => chromiumVersion < 110,
+    isDisabled: () => chromiumVersion < 110
   },
   'maxRulesByAnchors': {
-    type: 'number',
+    type: 'number'
   },
   'anchorHoverInjection': {
     type: 'boolean',
-    isDisabled: () => chromiumVersion < 110,
+    isDisabled: () => chromiumVersion < 110
+  },
+  'lastVisitInjection': {
+    type: 'boolean',
+    isDisabled: () => chromiumVersion < 110
   },
   'recordMetrics': {
     type: 'boolean'

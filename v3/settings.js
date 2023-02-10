@@ -7,6 +7,7 @@ export class Settings {
     autoInjection: false,
     maxRulesByAnchors: 5,
     anchorHoverInjection: true,
+    lastVisitInjection: true,
     recordMetrics: true,
   };
   #settings = null;
