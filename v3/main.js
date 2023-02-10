@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import { ContextMenu } from "./context_menu.js"
 import { Settings } from "./settings.js"
 import { StatusManager } from "./status_manager.js"
 import { Metrics } from "./metrics.js"
@@ -12,7 +13,7 @@ let synchedSettings = null;
 let lastPrediction = {};
 
 const chromiumVersion = getChromiumVersion();
-const menuId = 'prerenderLink';
+const contextMenu = new ContextMenu();
 const settings = new Settings(chromiumVersion);
 const status = new StatusManager();
 const metrics = new Metrics();
@@ -22,18 +23,6 @@ function checkPrerenderStatus(options) {
   chrome.tabs.sendMessage(options.tabId, { command: 'queryStatus' }, { frameId: 0 }, contentStatus => {
     status.update(options.tabId, contentStatus);
   });
-}
-
-function handleContentSwitch(options) {
-  // update context menu rule.
-  if (options || !options.url || !options.url.startsWith('http')) {
-    chrome.contextMenus.update(menuId, {});
-    return;
-  }
-  const url = new URL(options.url);
-  const portString = url.port ? (':' + url.port) : '';
-  const sameOriginPattern = url.protocol + '//' + url.host + portString + '/*';
-  chrome.contextMenus.update(menuId, { targetUrlPatterns: [sameOriginPattern] });
 }
 
 // Hooks
@@ -46,15 +35,12 @@ async function registerHooks() {
       if (tab.url.startsWith('http')) {
         checkPrerenderStatus({ reason: 'onActivated', tabId: activeInfo.tabId, windowId: activeInfo.windowId });
       }
-      handleContentSwitch({ reason: 'onActivated', url: tab.url });
     });
   });
 
   // Page load completion.
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'loading' && changeInfo.url) {
-      handleContentSwitch({ reason: 'onUpdated.loading', url: changeInfo.url });
-    } else if (changeInfo.status === 'complete') {
+    if (changeInfo.status === 'complete') {
       if (tab.url && tab.url.startsWith('http')) {
         if (tabId == lastPrediction.tab) {
           chrome.tabs.sendMessage(tabId, { command: 'insertRule', url: lastPrediction.to }, { frameId: 0 });
@@ -100,18 +86,10 @@ async function registerHooks() {
   });
 
   // Context menus.
-  chrome.contextMenus.removeAll();
-  chrome.contextMenus.create({
-    id: menuId,
-    contexts: ['link'],
-    title: 'Prerender this link'
+  contextMenu.register();
+  contextMenu.observe((tab, url) => {
+    chrome.tabs.sendMessage(tab, { command: 'insertRule', url: url }, { frameId: 0 });
   });
-  chrome.contextMenus.onClicked.addListener(
-    (info, tab) => {
-      if (info.menuItemId == menuId) {
-        chrome.tabs.sendMessage(tab.id, { command: 'insertRule', url: info.linkUrl }, { frameId: 0 });
-      }
-    });
 }
 
 if (chromiumVersion >= 110) {
