@@ -24,6 +24,7 @@ export class NavigationTracker {
   constructor() {
     chrome.tabs.onUpdated.addListener(this.#onUpdated.bind(this));
     chrome.tabs.onRemoved.addListener(this.#onRemoved.bind(this));
+    chrome.runtime.onMessage.addListener(this.#onMessage.bind(this));
   }
 
   observe(observer) {
@@ -78,5 +79,16 @@ export class NavigationTracker {
 
   #onRemoved(tabId) {
     delete this.#urls[tabId];
+  }
+
+  #onClick(message) {
+    console.log(message);
+  }
+
+  #onMessage(message, sender, sendResponse) {
+    if (message.message != 'click') {
+      return;
+    }
+    this.#onClick(message);
   }
 }

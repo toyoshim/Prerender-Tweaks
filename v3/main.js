@@ -54,11 +54,11 @@ async function registerHooks() {
 
   // Request from content script and popup page.
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if (message.message === 'update') {
+    if (message.message == 'update') {
       status.update(sender.tab.id, message.status);
-    } else if (message.message === 'settings') {
+    } else if (message.message == 'settings') {
       sendResponse(synchedSettings);
-    } else if (message.message === 'metrics') {
+    } else if (message.message == 'metrics') {
       if (await settings.get('recordMetrics')) {
         metrics.reportEffectiveLcp(
             message.origin,

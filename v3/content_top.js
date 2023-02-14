@@ -70,6 +70,23 @@ function isPrerenderableLink(href) {
   return true;
 }
 
+// Calculate CSS selector to query the element.
+function calculateSelector(element, childSelector) {
+  const suffix = childSelector ? ` ${childSelector}` : '';
+  if (element.id) {
+    // Now we can have a selector to point the unique element.
+    return `#${element.id}${suffix}`;
+  }
+  let selector = element.tagName;
+  if (element.className) {
+    selector += '.' + element.className.split(' ').join('.');
+  }
+  if (!element.parentElement) {
+    return `${selector}${suffix}`;
+  }
+  return calculateSelector(element.parentElement, `${selector}${suffix}`);
+}
+
 // Make the hasSpecrules status up to date, and notify the main.js on changes.
 function checkSpecrules() {
   if (prerenderStatus.hasSpecrules)
@@ -123,6 +140,17 @@ async function monitorAnchors() {
     });
     anchor.addEventListener('mouseleave', e => {
       delete candidateUrls[e.target.href];
+    });
+    anchor.addEventListener('click', e => {
+      const selector = calculateSelector(e.target);
+      const sibling = document.querySelectorAll(selector).length;
+      chrome.runtime.sendMessage(undefined, {
+        message: 'click',
+        initiator: document.location.href,
+        target: e.target.href,
+        selector: selector,
+        sibling: sibling
+      });
     });
   }
 }
