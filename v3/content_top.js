@@ -275,8 +275,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
+    const urls = [];
     if (message.to.url) {
-      injectSpecrules([message.to.url]);
+      urls.push(message.to.url);
     }
+    if (message.to.selector) {
+      matched = document.querySelectorAll(message.to.selector);
+      for (let a of matched) {
+        if (!isPrerenderableLink(a.href)) {
+          continue;
+        }
+        urls.push(a.href);
+        if (urls.length >= 5) {
+          break;
+        }
+      }
+    }
+    injectSpecrules(urls);
   }
 });
