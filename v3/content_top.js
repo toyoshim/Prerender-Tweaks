@@ -275,6 +275,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
-    injectSpecrules([message.url]);
+    if (message.to.url) {
+      injectSpecrules([message.to.url]);
+    }
   }
 });

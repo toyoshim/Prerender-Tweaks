@@ -43,7 +43,7 @@ async function registerHooks() {
     if (changeInfo.status === 'complete') {
       if (tab.url && tab.url.startsWith('http')) {
         if (tabId == lastPrediction.tab) {
-          chrome.tabs.sendMessage(tabId, { command: 'insertRule', url: lastPrediction.to }, { frameId: 0 });
+          chrome.tabs.sendMessage(tabId, { command: 'insertRule', to: lastPrediction.to }, { frameId: 0 });
         }
         checkPrerenderStatus({ tabId: tabId, windowId: tab.windowId });
       } else {
@@ -88,7 +88,7 @@ async function registerHooks() {
   // Context menus.
   contextMenu.register();
   contextMenu.observe((tab, url) => {
-    chrome.tabs.sendMessage(tab, { command: 'insertRule', url: url }, { frameId: 0 });
+    chrome.tabs.sendMessage(tab, { command: 'insertRule', to: { url: url } }, { frameId: 0 });
   });
 }
 
