@@ -39,11 +39,15 @@ async function registerHooks() {
   });
 
   // Page load completion.
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
       if (tab.url && tab.url.startsWith('http')) {
-        if (tabId == lastPrediction.tab) {
-          chrome.tabs.sendMessage(tabId, { command: 'insertRule', to: lastPrediction.to }, { frameId: 0 });
+        if (await settings.get('autoInjection')) {
+          chrome.tabs.sendMessage(tabId, {
+            command: 'insertRule',
+            to: (tabId == lastPrediction.tab) ? lastPrediction.to : {},
+            limit: settings.get('maxRulesByAnchors')
+          }, { frameId: 0 });
         }
         checkPrerenderStatus({ tabId: tabId, windowId: tab.windowId });
       } else {

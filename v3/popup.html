@@ -65,8 +65,15 @@ button {
 <div>
 Inject speculationrules automatically
 for a same-origin link that appears at anchor tags in the page.
-The first N links limited above will be prerendered.
+
+<div>
+<input type="checkbox" id="lastVisitInjection">
+<label for="lastVisitInjection">Remember the last visit navigations to decide prerender candidates.
+Otherwise, the first appeared N anchors will be used.
+</label>
 </div>
+</div>
+
 </fieldset>
 
 <fieldset>
@@ -75,15 +82,6 @@ The first N links limited above will be prerendered.
 <label for="anchorHoverInjection">Enable</label>
 <div>
 Inject speculationrules when mouse moves over an anchor tag that points to a same-origin page.
-</div>
-</fieldset>
-
-<fieldset>
-<legend>Prerender the last visit page</legend>
-<input type="checkbox" id="lastVisitInjection">
-<label for="lastVisitInjection">Enable</label>
-<div>
-Inject speculationrules for the page to which you navigated from the current page at last visit.
 </div>
 </fieldset>
 

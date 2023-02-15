@@ -133,7 +133,7 @@ async function monitorAnchors() {
       setTimeout(() => {
         if (candidateUrls[e.target.href]) {
           const url = new URL(e.target.href, document.baseURI);
-          injectSpecrules([url.href]);
+          injectSpecrules({ urls: [url.href] });
           // TODO: remove it after a certain time period.
         }
       }, 0);
@@ -187,10 +187,10 @@ function reportMetrics() {
 }
 
 // Inject speculationrules for specified URLs.
-async function injectSpecrules(urls) {
+async function injectSpecrules(options) {
   console.log('injecting speculationrules:');
   let rules = [];
-  for (let url of urls) {
+  for (let url of options.urls) {
     // Ignore if the url is already in the prerendered page list.
     if (prerenderedUrls.indexOf(url) >= 0) {
       continue;
@@ -198,6 +198,9 @@ async function injectSpecrules(urls) {
     prerenderedUrls.push(url);
     rules.push(`{ "source": "list", "urls": [ "${url}" ] }`);
     console.log(' * ' + url);
+    if (options.limit && rules.length >= options.limit) {
+      break;
+    }
   }
   if (rules.length == 0) {
     return null;
@@ -208,32 +211,6 @@ async function injectSpecrules(urls) {
   document.head.appendChild(rule);
   prerenderStatus.hasInjectedSpecrules = true;
   return rule;
-}
-
-// Inject a speculationrules for the first N anchor tag on the load completion.
-async function tryInjectingSpecrules() {
-  if (prerenderStatus.hasSpecrules || prerenderStatus.hasInjectedSpecrules)
-    return;
-
-  if (!await getRemoteSetting('autoInjection')) {
-    return;
-  }
-
-  let urls = [];
-  const maxRules = await getRemoteSetting('maxRulesByAnchors');
-  for (let a of document.getElementsByTagName('a')) {
-    if (!isPrerenderableLink(a.href)) {
-      continue;
-    }
-    const url = new URL(a.href, document.baseURI);
-    urls.push(url.href);
-    if (urls.length == maxRules) {
-      break;
-    }
-  }
-  if (urls.length == 0)
-    return;
-  injectSpecrules(urls);
 }
 
 // Content checks on load, and DOM modifications.
@@ -257,16 +234,46 @@ if (document.readyState === 'loading') {
   mutationObserver.observe(document, { childList: true, subtree: true });
 }
 
-// Auto injection on page load completion.
 if (document.readyState === 'complete') {
-  tryInjectingSpecrules();
   reportMetrics();
 } else {
   window.addEventListener('load', e => {
     scanContent();
-    tryInjectingSpecrules();
     reportMetrics();
   });
+}
+
+function generatePrerenderCandidates(options) {
+  if (prerenderStatus.hasSpecrules || prerenderStatus.hasInjectedSpecrules) {
+    return { urls: [] };
+  }
+
+  const urls = [];
+  const maxRules = options.limit || 5;
+
+  if (options.url) {
+    urls.push(options.url);
+  }
+  let anchors = [];
+  if (options.selector) {
+    anchors = document.querySelectorAll(options.selector);
+  }
+  if (urls.length == 0 && anchors.length == 0) {
+    // Take the first N if there is no prediction hints.
+    anchors = document.getElementsByTagName('a');
+  }
+  for (let a of anchors) {
+    if (urls.length >= maxRules) {
+      break;
+    }
+    if (!isPrerenderableLink(a.href)) {
+      continue;
+    }
+    const url = new URL(a.href, document.baseURI);
+    urls.push(url.href);
+  }
+
+  return { urls: urls, limit: options.limit };
 }
 
 // Communication with the main.js running in the background service worker.
@@ -275,22 +282,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
-    const urls = [];
-    if (message.to.url) {
-      urls.push(message.to.url);
-    }
-    if (message.to.selector) {
-      matched = document.querySelectorAll(message.to.selector);
-      for (let a of matched) {
-        if (!isPrerenderableLink(a.href)) {
-          continue;
-        }
-        urls.push(a.href);
-        if (urls.length >= 5) {
-          break;
-        }
-      }
-    }
-    injectSpecrules(urls);
+    injectSpecrules(generatePrerenderCandidates(message.to));
   }
 });
