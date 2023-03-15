@@ -93,12 +93,20 @@ function checkSpecrules() {
     return;
   prerenderStatus.hasSpecrules = false;
   for (let script of document.getElementsByTagName('script')) {
-    if (script.type != 'speculationrules')
+    if (script.type != 'speculationrules') {
       continue;
+    }
+    const rules = JSON.parse(script.text);
+    if (!rules.prerender) {
+      // No rules for prerendering.
+      continue;
+    }
+
     prerenderStatus.hasSpecrules = true;
     break;
   }
-  // Make sure that prerendering is actually not used.
+
+  // Make sure that prerendering is actually not used before sending the report.
   // Content script may overlook if activation happens before the inejction.
   if (performance.getEntriesByType('navigation')[0].activationStart > 0) {
     prerenderStatus.prerendered = true;
