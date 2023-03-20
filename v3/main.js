@@ -7,6 +7,7 @@ import { Settings } from './settings.js'
 import { StatusManager } from './status_manager.js'
 import { Metrics } from './metrics.js'
 import { NavigationTracker } from './navigation_tracker.js'
+import { NetRequest } from './net_request.js'
 import { getChromiumVersion } from './utils.js'
 
 import { getSite } from './third_party/psl.min.js'
@@ -20,6 +21,7 @@ const settings = new Settings(chromiumVersion);
 const status = new StatusManager();
 const metrics = new Metrics();
 const tracker = new NavigationTracker();
+const netRequest = new NetRequest();
 
 function checkPrerenderStatus(options) {
   chrome.tabs.sendMessage(options.tabId, { command: 'queryStatus' }, { frameId: 0 }, contentStatus => {
@@ -30,6 +32,12 @@ function checkPrerenderStatus(options) {
 // Hooks
 async function registerHooks() {
   synchedSettings = await settings.getSettings();
+
+  // Activate declarativeNetRequest rulesets to inject Supports-Loading-Mode: credentialed-prerender`
+  // to permit cross-origin same-site prerendering.
+  if (await settings.get('crossOriginSameSiteSupport')) {
+    netRequest.enableLoadingMode();
+  }
 
   // Tab switch.
   chrome.tabs.onActivated.addListener(activeInfo => {

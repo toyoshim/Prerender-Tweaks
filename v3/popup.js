@@ -4,11 +4,13 @@
 
 import { Settings } from "./settings.js"
 import { Metrics } from "./metrics.js"
+import { NetRequest } from "./net_request.js"
 import { getChromiumVersion } from "./utils.js"
 
 const chromiumVersion = getChromiumVersion();
 const settings = new Settings(chromiumVersion);
 const metrics = new Metrics();
+const netRequest = new NetRequest();
 
 let fields = {
   'autoInjection': {
@@ -26,6 +28,16 @@ let fields = {
     type: 'boolean',
     isDisabled: () => chromiumVersion < 110
   },
+  'crossOriginSameSiteSupport': {
+    type: 'boolean',
+    onChanged: checked => {
+      if (checked) {
+        netRequest.enableLoadingMode();
+      } else {
+        netRequest.disableLoadingMode();
+      }
+    }
+  },
   'recordMetrics': {
     type: 'boolean'
   }
@@ -40,6 +52,9 @@ for (let key in fields) {
     element.checked = await settings.get(key);
     element.addEventListener('click', e => {
       settings.set(e.target.id, e.target.checked);
+      if (fields[key].onChanged) {
+        fields[key].onChanged(e.target.checked);
+      }
     });
   } else if (fields[key].type == 'number') {
     element.value = await settings.get(key);

@@ -30,6 +30,11 @@ div.section {
     font-weight: bold;
     margin: 8pt;
 }
+code {
+    font-size: 8pt;
+    background: #eee;
+    padding: 2pt;
+}
 fieldset {
     margin: 12pt;
 }
@@ -82,6 +87,16 @@ Otherwise, the first appeared N anchors will be used.
 <label for="anchorHoverInjection">Enable</label>
 <div>
 Inject speculationrules when mouse moves over an anchor tag that points to a same-origin page.
+</div>
+</fieldset>
+
+<fieldset>
+<legend>Cross-Origin, Same-Site Prerender</legend>
+<input type="checkbox" id="crossOriginSameSiteSupport">
+<label for="crossOriginSameSiteSupport">Enable</label>
+<div>
+Inject <code>Support-Loading-Mode: credentialed-prerender</code>
+to permit cross-origin same-site prerendering.
 </div>
 </fieldset>
 

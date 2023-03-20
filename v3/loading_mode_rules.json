@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "Supports-Loading-Mode",
+          "operation": "append",
+          "value": "credentialed-prerender"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*",
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

@@ -1,7 +1,7 @@
 {
   "name": "Prerender Tweaks",
   "manifest_version": 3,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "action": {
     "default_title": "Prerender Tweeks",
     "default_popup": "popup.html"
@@ -22,11 +22,19 @@
       "all_frames": false
     }
   ],
+  "declarative_net_request" : {
+    "rule_resources": [{
+      "id": "loading_mode_rules",
+      "enabled": false,
+      "path": "loading_mode_rules.json"
+    }]
+  },
   "host_permissions": [
     "<all_urls>"
   ],
   "permissions": [
     "contextMenus",
+    "declarativeNetRequestWithHostAccess",
     "storage",
     "tabs"
   ]

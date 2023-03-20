@@ -9,6 +9,7 @@ export class Settings {
     anchorHoverInjection: true,
     lastVisitInjection: true,
     recordMetrics: true,
+    crossOriginSameSiteSupport: true
   };
   #settings = null;
 
