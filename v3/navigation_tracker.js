@@ -2,25 +2,37 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { Settings as NavigationTrackerSettings } from "./settings.js";
+import { Settings as NavigationTrackerSettings, Settings } from "./settings.js";
 import { getChromiumVersion as NavigationTrackerGetChromiumVersion } from "./utils.js";
+import { getSite } from './third_party/psl.min.js'
 
 function getBaseUrl(href) {
   const url = new URL(href);
   return url.href.substring(0, url.href.length - url.hash.length);
 }
 
-function isPrerenderableLink(initiator, target) {
+async function isPrerenderableLink(initiator, target, settings) {
   if (!initiator.startsWith('http')) {
     return false;
   }
   const initiatorUrl = new URL(initiator);
   const targetUrl = new URL(target);
-  return initiatorUrl.origin == targetUrl.origin;
+  if (initiatorUrl.origin == targetUrl.origin) {
+    return true;
+  }
+  if (await settings.get('crossOriginSameSiteSupport')) {
+    if (initiatorUrl.protocol != targetUrl.protocol) {
+      return false;
+    }
+    const initiatorSite = getSite(initiatorUrl.host);
+    const targetSite = getSite(targetUrl.host);
+    return initiatorSite == targetSite;
+  }
+  return false;
 }
 
 export class NavigationTracker {
-  #urls = {};
+  #urls = {};  // Tracks the last visited URL on each tab.
   #urlTracks = {};
   #selectorTracks = {};
   #observer = null;
@@ -64,19 +76,21 @@ export class NavigationTracker {
       return;
     }
 
-    // Notify the last URL transition.
-    const isPrerenderable = lastUrlTrack ? isPrerenderableLink(url, lastUrlTrack) : false;
+    // Predicts the next navigation.
+    const urlTrack = this.#urlTracks[url];
+    const isPrerenderable = lastUrlTrack && await isPrerenderableLink(url, urlTrack, this.#settings);
     const selectorTrack = this.#selectorTracks[url];
     if (isPrerenderable || selectorTrack) {
       const to = {};
       if (isPrerenderable) {
-        to.url = lastUrlTrack;
+        to.url = urlTrack;
       }
       if (selectorTrack) {
         to.selector = selectorTrack;
       }
       this.#observer({
         event: 'predict',
+        tab: tabId,
         to: to
       });
     }
@@ -85,9 +99,10 @@ export class NavigationTracker {
     if (lastUrlTrack == url && isPrerenderable) {
       this.#observer({
         event: 'hit',
+        tab: tabId,
         from: lastUrl,
         to: {
-          url: lastTrack
+          url: lastUrlTrack
         }
       });
     }

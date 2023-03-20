@@ -9,7 +9,6 @@ import { Metrics } from './metrics.js'
 import { NavigationTracker } from './navigation_tracker.js'
 import { NetRequest } from './net_request.js'
 import { getChromiumVersion } from './utils.js'
-
 import { getSite } from './third_party/psl.min.js'
 
 let synchedSettings = null;
@@ -53,10 +52,12 @@ async function registerHooks() {
     if (changeInfo.status === 'complete') {
       if (tab.url && tab.url.startsWith('http')) {
         if (await settings.get('autoInjection')) {
+          const url = new URL(tab.url);
           chrome.tabs.sendMessage(tabId, {
             command: 'insertRule',
+            site: await settings.get('crossOriginSameSiteSupport') ? getSite(url.host) : undefined,
             to: (tabId == lastPrediction.tab) ? lastPrediction.to : {},
-            limit: settings.get('maxRulesByAnchors')
+            limit: await settings.get('maxRulesByAnchors')
           }, { frameId: 0 });
         }
         checkPrerenderStatus({ tabId: tabId, windowId: tab.windowId });
@@ -93,7 +94,6 @@ async function registerHooks() {
 
   // Dispatch tracking prediction events.
   tracker.observe(e => {
-    console.log(e);
     if (e.event == 'predict') {
       lastPrediction = e;
     }

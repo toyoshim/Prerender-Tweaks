@@ -42,7 +42,7 @@ async function getRemoteSetting(key) {
 }
 
 // Check if the link that is potentially relative URL can be prerendered.
-function isPrerenderableLink(href) {
+function isPrerenderableLink(href, site) {
   const url = new URL(href, document.baseURI);
 
   // Already prerendered.
@@ -50,10 +50,7 @@ function isPrerenderableLink(href) {
     return false;
   }
 
-  // Same-origin check.
-  if (url.origin !== document.location.origin) {
-    return false;
-  }
+  // Exclude self links.
   const baseUrl = document.location.href.substring(
       0, document.location.href.length - document.location.hash.length);
   if (url.href.startsWith(baseUrl)) {
@@ -67,7 +64,16 @@ function isPrerenderableLink(href) {
       return false;
     }
   }
-  return true;
+
+  // Same-origin check.
+  if (url.origin == document.location.origin) {
+    return true;
+  }
+  // Same-site check.
+  if (!site || (url.protocol != document.location.protocol)) {
+    return false;
+  }
+  return url.host.endsWith(site);
 }
 
 // Calculate CSS selector to query the element.
@@ -251,7 +257,7 @@ if (document.readyState === 'complete') {
   });
 }
 
-function generatePrerenderCandidates(options) {
+function generatePrerenderCandidates(options, site) {
   if (prerenderStatus.hasSpecrules || prerenderStatus.hasInjectedSpecrules) {
     return { urls: [] };
   }
@@ -274,7 +280,7 @@ function generatePrerenderCandidates(options) {
     if (urls.length >= maxRules) {
       break;
     }
-    if (!isPrerenderableLink(a.href)) {
+    if (!isPrerenderableLink(a.href, site)) {
       continue;
     }
     const url = new URL(a.href, document.baseURI);
@@ -290,6 +296,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
-    injectSpecrules(generatePrerenderCandidates(message.to));
+    injectSpecrules(generatePrerenderCandidates(message.to, message.site));
   }
 });
