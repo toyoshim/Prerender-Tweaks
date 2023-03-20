@@ -6,6 +6,7 @@
 let prerenderStatus = {
   prerendered: document.prerendering,
   url: location.href,
+  site: undefined,
   activated: false,
   hasSpecrules: false,
   hasInjectedSpecrules: false,
@@ -134,8 +135,10 @@ async function monitorAnchors() {
     if (anchor.hasAttribute(monitorMarkName)) {
       continue;
     }
-    if (!isPrerenderableLink(anchor.href)) {
-      anchor.setAttribute(monitorMarkName, 'no');
+    if (!isPrerenderableLink(anchor.href, prerenderStatus.site)) {
+      if (prerenderStatus.site) {
+        anchor.setAttribute(monitorMarkName, 'no');
+      }
       continue;
     }
     anchor.setAttribute(monitorMarkName, 'yes');
@@ -296,6 +299,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     queried = true;
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
+    if (message.site) {
+      prerenderStatus.site = message.site;
+    }
     injectSpecrules(generatePrerenderCandidates(message.to, message.site));
   }
 });
