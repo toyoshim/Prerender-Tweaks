@@ -2,12 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { ContextMenu } from "./context_menu.js"
-import { Settings } from "./settings.js"
-import { StatusManager } from "./status_manager.js"
-import { Metrics } from "./metrics.js"
-import { NavigationTracker } from "./navigation_tracker.js"
-import { getChromiumVersion } from "./utils.js"
+import { ContextMenu } from './context_menu.js'
+import { Settings } from './settings.js'
+import { StatusManager } from './status_manager.js'
+import { Metrics } from './metrics.js'
+import { NavigationTracker } from './navigation_tracker.js'
+import { getChromiumVersion } from './utils.js'
+
+import { getSite } from './third_party/psl.min.js'
 
 let synchedSettings = null;
 let lastPrediction = {};
