@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import { BlockedOrigins } from './blocked_origins.js'
 import { ContextMenu } from './context_menu.js'
 import { Settings } from './settings.js'
 import { StatusManager } from './status_manager.js'
@@ -14,6 +15,7 @@ import { getSite } from './third_party/psl.min.js'
 let synchedSettings = null;
 let lastPrediction = {};
 
+const blockedOrigins = new BlockedOrigins();
 const chromiumVersion = getChromiumVersion();
 const contextMenu = new ContextMenu();
 const settings = new Settings(chromiumVersion);
@@ -51,8 +53,8 @@ async function registerHooks() {
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
       if (tab.url && tab.url.startsWith('http')) {
-        if (await settings.get('autoInjection')) {
-          const url = new URL(tab.url);
+        const url = new URL(tab.url);
+        if (await settings.get('autoInjection') && !await blockedOrigins.isBlocked(url.origin)) {
           chrome.tabs.sendMessage(tabId, {
             command: 'insertRule',
             site: await settings.get('crossOriginSameSiteSupport') ? getSite(url.host) : undefined,

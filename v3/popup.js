@@ -2,17 +2,38 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import { Settings } from "./settings.js"
-import { Metrics } from "./metrics.js"
-import { NetRequest } from "./net_request.js"
-import { getChromiumVersion } from "./utils.js"
+import { BlockedOrigins } from './blocked_origins.js'
+import { Settings } from './settings.js'
+import { Metrics } from './metrics.js'
+import { NetRequest } from './net_request.js'
+import { getChromiumVersion } from './utils.js'
 
+const blockedOrigins = new BlockedOrigins();
 const chromiumVersion = getChromiumVersion();
 const settings = new Settings(chromiumVersion);
 const metrics = new Metrics();
 const netRequest = new NetRequest();
 
+const tab = await chrome.tabs.query({ active: true, lastFocusedWindow: true});
+const url = new URL(tab[0].url);
+for (let span of document.getElementsByName('domain')) {
+  span.innerText =  url.origin + '/';
+}
+
 let fields = {
+  'enable': {
+    type: 'boolean',
+    isChecked: async () => {
+      return !await blockedOrigins.isBlocked(url.origin);
+    },
+    onChanged: checked => {
+      if (checked) {
+        blockedOrigins.allow(url.origin);
+      } else {
+        blockedOrigins.block(url.origin);
+      }
+    }
+  },
   'autoInjection': {
     type: 'boolean',
     isDisabled: () => chromiumVersion < 110
@@ -49,7 +70,7 @@ for (let key in fields) {
     element.disabled = fields[key].isDisabled();
   }
   if (fields[key].type == 'boolean') {
-    element.checked = await settings.get(key);
+    element.checked = fields[key].isChecked ? await fields[key].isChecked() : await settings.get(key);
     element.addEventListener('click', e => {
       settings.set(e.target.id, e.target.checked);
       if (fields[key].onChanged) {
@@ -76,8 +97,6 @@ const labels = [];
 for (let i = 0; i <= 30; ++i) {
   labels.push(((i * 0.1).toString() + '.0').substring(0, 3));
 }
-const tab = await chrome.tabs.query({ active: true, lastFocusedWindow: true});
-const url = new URL(tab[0].url);
 const lcp = await metrics.getLcp(url.origin);
 
 function getAverage(data) {

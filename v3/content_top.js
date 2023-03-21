@@ -15,7 +15,6 @@ let prerenderStatus = {
   // for debug.
   readyStateOnStart: document.readyState,
 };
-let queried = false;
 let settings = chrome.runtime.sendMessage(undefined, { message: 'settings' });
 let prerenderedUrls = [];
 let candidateUrls = {};
@@ -119,9 +118,6 @@ function checkSpecrules() {
     prerenderStatus.prerendered = true;
     prerenderStatus.activated = true;
   }
-  if (!queried || (prerenderStatus.prerendered && !prerenderStatus.activated))
-    return;
-  chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
 }
 
 // Monitor anchor tags.
@@ -172,16 +168,33 @@ async function monitorAnchors() {
   }
 }
 
-function scanContent() {
-  checkSpecrules();
-  monitorAnchors();
+// Monitor DOM modifications to make the prerender status up-to-date.
+function monitorMutation() {
+  // Following tricks make the continuous small changes not to cause multiple actions.
+  let mutationChecking = false;
+  const mutationObserver = new MutationObserver(o => {
+    if (mutationChecking)
+      return;
+    mutationChecking = true;
+    setTimeout(e => {
+      // We run checks at most once in 100ms.
+      checkSpecrules();
+      if (!prerenderStatus.prerendered || prerenderStatus.activated) {
+        chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
+      }
+      mutationChecking = false;
+    }, 100);
+  });
+  mutationObserver.observe(document, { childList: true, subtree: true });
 }
 
+// Gather LCP and effective LCP to record metrics locally.
 function reportMetrics() {
   const observer = new PerformanceObserver(list=> {
     const entries = list.getEntries();
     const lastEntry = entries[entries.length - 1];
     const navigationEntry = performance.getEntriesByType('navigation')[0];
+
     // Follow up the case activation happens before the script injection.
     prerenderStatus.prerendered = navigationEntry.activationStart > 0;
     prerenderStatus.activated = navigationEntry.activationStart > 0;
@@ -230,36 +243,7 @@ async function injectSpecrules(options) {
   return rule;
 }
 
-// Content checks on load, and DOM modifications.
-let mutationChecking = false;
-const mutationObserver = new MutationObserver(o => {
-  if (mutationChecking)
-    return;
-  mutationChecking = true;
-  setTimeout(e => {
-    mutationChecking = false;
-    scanContent();
-  }, 100);
-});
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', e => {
-    scanContent();
-    mutationObserver.observe(document, { childList: true, subtree: true });
-  });
-} else {
-  scanContent();
-  mutationObserver.observe(document, { childList: true, subtree: true });
-}
-
-if (document.readyState === 'complete') {
-  reportMetrics();
-} else {
-  window.addEventListener('load', e => {
-    scanContent();
-    reportMetrics();
-  });
-}
-
+// Pick up up-to N links from the predicted candidates and embedded anchor links.
 function generatePrerenderCandidates(options, site) {
   if (prerenderStatus.hasSpecrules || prerenderStatus.hasInjectedSpecrules) {
     return { urls: [] };
@@ -296,12 +280,15 @@ function generatePrerenderCandidates(options, site) {
 // Communication with the main.js running in the background service worker.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.command === 'queryStatus') {
-    queried = true;
+    checkSpecrules();
     sendResponse(prerenderStatus);
   } else if (message.command === 'insertRule') {
     if (message.site) {
       prerenderStatus.site = message.site;
     }
+    reportMetrics();
     injectSpecrules(generatePrerenderCandidates(message.to, message.site));
+    monitorAnchors();
+    monitorMutation();
   }
 });
