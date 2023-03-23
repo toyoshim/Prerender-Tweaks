@@ -72,15 +72,26 @@ async function registerHooks() {
   // Request from content script and popup page.
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.message == 'update') {
+      if (message.status.prerendered && message.status.effectiveLargestContentfulPaint > 0.0) {
+        const score = await metrics.evaluateScore(
+            message.origin,
+            message.status.effectiveLargestContentfulPaint);
+        if (score > 0.0) {
+          message.status.score = score;
+        }
+      }
       status.update(sender.tab.id, message.status);
     } else if (message.message == 'settings') {
       sendResponse(synchedSettings);
     } else if (message.message == 'metrics') {
       if (await settings.get('recordMetrics')) {
+        if (message.status.restoredFromBFCache) {
+          return;
+        }
         metrics.reportEffectiveLcp(
             message.origin,
-            message.prerendered,
-            message.effectiveLargestContentfulPaint);
+            message.status.prerendered,
+            message.status.effectiveLargestContentfulPaint);
       }
     } else if (message.message == 'clearAllMetrics')  {
       metrics.clearAll();

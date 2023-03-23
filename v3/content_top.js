@@ -11,6 +11,7 @@ let prerenderStatus = {
   hasSpecrules: false,
   hasInjectedSpecrules: false,
   restoredFromBFCache: false,
+  effectiveLargestContentfulPaint: 0.0,
 
   // for debug.
   readyStateOnStart: document.readyState,
@@ -19,12 +20,20 @@ let settings = chrome.runtime.sendMessage(undefined, { message: 'settings' });
 let prerenderedUrls = [];
 let candidateUrls = {};
 
+function sendUpdate() {
+  chrome.runtime.sendMessage(undefined, {
+    message: 'update',
+    status: prerenderStatus,
+    origin: document.location.origin
+  });
+}
+
 // Make the activated status up to date.
 if (document.prerendering) {
   document.addEventListener('prerenderingchange', () => {
     prerenderStatus.prerendered = true;
     prerenderStatus.activated = true;
-    chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
+    sendUpdate();
   });
 }
 
@@ -33,7 +42,7 @@ window.addEventListener('pageshow', e => {
   if (prerenderStatus.restoredFromBFCache || !e.persisted)
     return;
   prerenderStatus.restoredFromBFCache = true;
-  chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
+  sendUpdate();
 });
 
 // Obtains Extensions settings delivered at the script start time.
@@ -180,7 +189,7 @@ function monitorMutation() {
       // We run checks at most once in 100ms.
       checkSpecrules();
       if (!prerenderStatus.prerendered || prerenderStatus.activated) {
-        chrome.runtime.sendMessage(undefined, { message: 'update', status: prerenderStatus });
+        sendUpdate();
       }
       mutationChecking = false;
     }, 100);
@@ -198,18 +207,13 @@ function reportMetrics() {
     // Follow up the case activation happens before the script injection.
     prerenderStatus.prerendered = navigationEntry.activationStart > 0;
     prerenderStatus.activated = navigationEntry.activationStart > 0;
-    const effectiveLargestContentfulPaint = Math.max(
+    prerenderStatus.effectiveLargestContentfulPaint = Math.max(
        lastEntry.startTime - navigationEntry.activationStart, 0);
 
     // send metrics to the background Extension service.
     chrome.runtime.sendMessage(undefined, {
        message: 'metrics',
-       prerendered: prerenderStatus.prerendered,
-       restoredFromBFCache: prerenderStatus.restoredFromBFCache,
-       activationStart: navigationEntry.activationStart,
-       largestContentfulPaint: lastEntry.startTime,
-       effectiveLargestContentfulPaint: effectiveLargestContentfulPaint,
-       url: document.location.href,
+       status: prerenderStatus,
        origin: document.location.origin
      });
   });

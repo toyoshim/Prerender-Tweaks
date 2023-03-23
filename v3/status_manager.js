@@ -2,6 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+function getScoreText(score) {
+  const adjustedScore = score / 1000.0 + 0.09;  // for round-up.
+  let scoreText = '';
+  if (adjustedScore >= 10.0) {
+    scoreText = '10+';
+  } else {
+    scoreText = adjustedScore.toString().substr(0, 3);
+  }
+  return '↑' + scoreText + 's';
+}
+
 export class StatusManager {
   #updateIcon(tabId, title, badgeText, badgeBgColor) {
     chrome.action.setTitle({ tabId: tabId, title: title });
@@ -48,6 +59,10 @@ export class StatusManager {
     }
     if (text === '|') {
       text = '';
+    }
+    if (status.score) {
+      text = getScoreText(status.score);
+      title += '\nPrerender improves performance by ' + text;
     }
     this.#updateIcon(tabId, title, text, color);
   }

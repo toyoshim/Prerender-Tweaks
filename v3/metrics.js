@@ -11,7 +11,7 @@
 //   },
 //   lcp_n_0: {                     // non-prerendered data for all origins
 //     count: <integer>,            // lcp non-prerendered report count
-//     total: <real>,               // lcp non-prerenderd total time length in ms
+//     total: <real>,               // lcp non-prerendered total time length in ms
 //     bucket: array<integer>[31]   // report count for each bucket
 //   },                             //  index N: [N * 100, N * 100 + 100) ms
 //                                  //  index 30: over 3000 ms
@@ -61,6 +61,7 @@ export class Metrics {
     console.log('lcp_p', this.#lcp_p);
   }
 
+  // Returns positive impact on the current prerendered LCP per non-prerendered average in ms.
   async reportEffectiveLcp(origin, prerendered, lcp) {
     const bucket = this.#calculateBucket(lcp);
     await this.#initialize();
@@ -86,7 +87,12 @@ export class Metrics {
       data['lcp_n_' + index] = this.#lcp_n[index];
       await chrome.storage.local.set(data);
     }
-    // TODO: update per-origin variants
+  }
+
+  async evaluateScore(origin, lcp) {
+    await this.#initialize();
+    const index = await this.#warmupFor(origin);
+    return (this.#lcp_n[index].total / this.#lcp_n[index].count) - lcp;
   }
 
   async getLcp(origin) {
