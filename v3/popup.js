@@ -100,7 +100,7 @@ for (let i = 0; i <= 30; ++i) {
 const lcp = await metrics.getLcp(url.origin);
 
 function getAverage(data) {
-  if (!data) {
+  if (!data || data.count == 0) {
     return '-';
   }
   return (data.total / data.count / 1000).toString().substring(0, 5) + ' [sec]';
