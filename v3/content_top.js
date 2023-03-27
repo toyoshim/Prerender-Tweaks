@@ -108,7 +108,7 @@ function checkSpecrules() {
     return;
   prerenderStatus.hasSpecrules = false;
   for (let script of document.getElementsByTagName('script')) {
-    if (script.type != 'speculationrules') {
+    if (script.getAttribute('type') != 'speculationrules') {
       continue;
     }
     const rules = JSON.parse(script.text);
