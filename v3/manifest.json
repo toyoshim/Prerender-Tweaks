@@ -1,13 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Prerender Tweaks",
-  "version": "1.5.1",
+  "version": "1.5.2",
 
   "action": {
     "default_title": "Prerender Tweeks",
     "default_popup": "popup.html"
   },
   "description": "This extension dramatically speeds up navigation by adding speculationrules to trigger prerendering, based on user actions.",
+  "icons": {
+    "32": "icons/32.png",
+    "64": "icons/64.png",
+    "128": "icons/128.png"
+  },
 
   "background": {
     "service_worker": "main.js",
