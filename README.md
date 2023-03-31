@@ -1,9 +1,10 @@
 # Chrome Extensions: Prerender Tweaks
 
 ## Install (requires Chrome 110+)
-1. Open chrome://extensions/, and enable the developer mode.
-2. Install v3 directories from the "Load unpacked" button.
-3. Pin the `Prerender Tweaks` from the Extensions menu.
+1. Download the extension from the [latest release](https://github.com/toyoshim/Prerender-Tweaks/releases/latest), and unpack it.
+2. Open chrome://extensions/, and enable Developer mode in the top-right corner.
+3. Press the "Load unpacked" button, and select the "v3" subdirectory from the directory you unpacked in step 1.
+4. Pin the `Prerender Tweaks` from the Extensions menu.
 
 ![Pin](img/pin.png)
 
