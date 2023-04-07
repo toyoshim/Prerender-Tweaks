@@ -16,6 +16,7 @@ let prerenderStatus = {
   // for debug.
   readyStateOnStart: document.readyState,
 };
+const markName = 'prerender-tweaks';
 let settings = chrome.runtime.sendMessage(undefined, { message: 'settings' });
 let prerenderedUrls = [];
 let candidateUrls = {};
@@ -105,10 +106,13 @@ function calculateSelector(element, childSelector) {
 // Make the hasSpecrules status up to date, and notify the main.js on changes.
 function checkSpecrules() {
   if (prerenderStatus.hasSpecrules)
-    return;
+    return true;
   prerenderStatus.hasSpecrules = false;
   for (let script of document.getElementsByTagName('script')) {
-    if (script.getAttribute('type') != 'speculationrules') {
+    if (Element.prototype.getAttribute.call(script, 'type') != 'speculationrules') {
+      continue;
+    }
+    if (Element.prototype.getAttribute.call(script, markName) == 'yes') {
       continue;
     }
     const rules = JSON.parse(script.text);
@@ -127,6 +131,7 @@ function checkSpecrules() {
     prerenderStatus.prerendered = true;
     prerenderStatus.activated = true;
   }
+  return prerenderStatus.hasSpecrules;
 }
 
 // Monitor anchor tags.
@@ -135,18 +140,17 @@ async function monitorAnchors() {
     return;
   }
   // TODO: may be better to check the 'src' attribute again as the link may be changed.
-  const monitorMarkName = 'prerender-tweaks-monitoring';
   for (let anchor of document.getElementsByTagName('a')) {
-    if (anchor.hasAttribute(monitorMarkName)) {
+    if (anchor.hasAttribute(markName)) {
       continue;
     }
     if (!isPrerenderableLink(anchor.href, prerenderStatus.site)) {
       if (prerenderStatus.site) {
-        anchor.setAttribute(monitorMarkName, 'no');
+        anchor.setAttribute(markName, 'no');
       }
       continue;
     }
-    anchor.setAttribute(monitorMarkName, 'yes');
+    anchor.setAttribute(markName, 'yes');
     anchor.addEventListener('mouseenter', e => {
       if (candidateUrls[e.target.href]) {
         return;
@@ -219,7 +223,6 @@ function reportMetrics() {
   });
   observer.observe({ type: 'largest-contentful-paint', buffered: true });
 }
-
 // Inject speculationrules for specified URLs.
 async function injectSpecrules(options) {
   console.log('injecting speculationrules:');
@@ -242,6 +245,7 @@ async function injectSpecrules(options) {
   const rule = document.createElement('script');
   rule.type = 'speculationrules';
   rule.innerText = '{ "prerender": [ ' + rules.join(',') + ' ] }';
+  Element.prototype.setAttribute.call(rule, markName, 'yes');
   document.head.appendChild(rule);
   prerenderStatus.hasInjectedSpecrules = true;
   return rule;
@@ -291,7 +295,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       prerenderStatus.site = message.site;
     }
     reportMetrics();
-    injectSpecrules(generatePrerenderCandidates(message.to, message.site));
+    if (!checkSpecrules()) {
+      injectSpecrules(generatePrerenderCandidates(message.to, message.site));
+    }
     monitorAnchors();
     monitorMutation();
   }

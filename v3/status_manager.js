@@ -45,16 +45,16 @@ export class StatusManager {
         color = '#00f';
         title += '\nPrerendered';
       }
-      if (status.hasInjectedSpecrules) {
+      if (status.hasSpecrules) {
+        text += 'S|';
+        color = '#0f0';
+        title += '\nPage contains speculationrules';
+      } else if (status.hasInjectedSpecrules) {
         text += 'I|';
         if (!color) {
           color = '#ff0';
         }
         title += '\nPage contains tweaked speculationrules';
-      } else if (status.hasSpecrules) {
-        text += 'S|';
-        color = '#0f0';
-        title += '\nPage contains speculationrules';
       }
     }
     if (text === '|') {
